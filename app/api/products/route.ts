@@ -1,0 +1,60 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getDb } from "@/lib/db";
+
+export async function GET(req: NextRequest) {
+	const { searchParams } = new URL(req.url);
+	const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
+	const limit = Math.max(1, Math.min(50, Number(searchParams.get("limit") ?? "10")));
+	const sort = String(searchParams.get("sort") ?? "price_asc");
+	const category = searchParams.get("category"); // slug
+
+	const db = getDb();
+	let orderBy = "p.price ASC";
+	if (sort === "price_desc") orderBy = "p.price DESC";
+	else if (sort === "rating") orderBy = "p.rating DESC";
+	else if (sort === "name") orderBy = "p.name ASC";
+
+	const where: string[] = [];
+	const params: any[] = [];
+	if (category) {
+		where.push("c.slug = ?");
+		params.push(category);
+	}
+	const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+	const totalRow = db.prepare(
+		`SELECT COUNT(1) as cnt
+		 FROM products p
+		 JOIN categories c ON c.id = p.category_id
+		 ${whereSql}`
+	).get(...params) as { cnt: number };
+
+	const offset = (page - 1) * limit;
+	const rows = db.prepare(
+		`SELECT 
+		 p.id, 
+		 p.name, 
+		 p.description, 
+		 p.price, 
+		 (SELECT COUNT(DISTINCT oi.order_id) FROM order_items oi WHERE oi.product_id = p.id) AS rating,
+		 p.image, 
+		 c.slug as category
+		 FROM products p
+		 JOIN categories c ON c.id = p.category_id
+		 ${whereSql}
+		 ORDER BY ${orderBy}
+		 LIMIT ? OFFSET ?`
+	).all(...params, limit, offset) as Array<{
+		id: number; name: string; description: string; price: number; rating: number; image: string; category: string;
+	}>;
+
+	return NextResponse.json({
+		items: rows,
+		total: totalRow.cnt,
+		page,
+		limit,
+		hasMore: offset + rows.length < totalRow.cnt
+	});
+}
+
+

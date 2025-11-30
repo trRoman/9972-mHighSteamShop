@@ -1,0 +1,17 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "react/jsx-key": "error",
+    "@next/next/no-img-element": "off"
+  }
+}
+
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "react/jsx-key": "error",
+    "@next/next/no-img-element": "off"
+  }
+}
+
+

@@ -1,0 +1,17 @@
+mhighsteam.ru
+
+// Пароль для админа
+mhighsteam.ru/login
+E-mail: admin@ya.ru
+Пароль: 4321q
+
+
+IP-адрес 193.227.240.138
+Доступ к серверу
+Логин: root
+Пароль: Wc8Mak8wtZShOxqP
+
+
+cd /root/9972-mhighsteamshop
+
+git@github.com:trRoman/9972-mHighSteamShop.git
