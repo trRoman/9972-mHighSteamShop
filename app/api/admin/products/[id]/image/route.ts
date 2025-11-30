@@ -4,6 +4,7 @@ import { getCurrentAdmin } from "@/lib/auth";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import sharp from "sharp";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
 	if (!getCurrentAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,18 +17,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = Buffer.from(arrayBuffer);
 
-	const ext = (() => {
-		const mt = file.type || "";
-		if (mt.includes("png")) return "png";
-		if (mt.includes("jpeg") || mt.includes("jpg")) return "jpg";
-		if (mt.includes("webp")) return "webp";
-		return "png";
-	})();
 	const publicDir = path.join(process.cwd(), "public", "products");
 	if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 	// generate content hash to make a unique filename per upload
 	const hash = crypto.createHash("sha1").update(buffer).digest("hex").slice(0, 10);
-	const fileName = `${id}-${hash}.${ext}`;
+	// Стандартизируем хранилище под WebP
+	const fileName = `${id}-${hash}.webp`;
 	const filePath = path.join(publicDir, fileName);
 
 	// cleanup old files for this product id to prevent stale assets
@@ -39,7 +34,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 		}
 	} catch {}
 
-	fs.writeFileSync(filePath, buffer);
+	// Оптимизация: ресайз до разумного максимума и сохранение в WebP (качество 80)
+	// Сохраняем ориентацию, не увеличиваем малые изображения
+	await sharp(buffer)
+		.rotate()
+		.resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
+		.webp({ quality: 80 })
+		.toFile(filePath);
+
 	// final URL: unique path (no query needed)
 	const imageUrl = `/products/${fileName}`;
 
