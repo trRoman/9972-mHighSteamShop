@@ -3,6 +3,9 @@ import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import Header from "@/components/Header";
 import CategoryBar from "@/components/CategoryBar";
+import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
 	title: "Заказ доставки еды в баню",
@@ -20,10 +23,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 						</div>
 					</header>
 					<div className="container">
-						<CategoryBar />
+						<Suspense fallback={<div />}>
+							<CategoryBar />
+						</Suspense>
 					</div>
 					<main className="container py-6">
-						{children}
+						<Suspense fallback={<div />}>
+							{children}
+						</Suspense>
 					</main>
 				</CartProvider>
 			</body>
