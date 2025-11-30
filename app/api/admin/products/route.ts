@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 		 ORDER BY c.name ASC, p.id DESC`
 	).all(...params);
 
-	return NextResponse.json({ items: rows });
+	return NextResponse.json({ items: rows }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: NextRequest) {
