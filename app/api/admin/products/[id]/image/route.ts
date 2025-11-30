@@ -5,6 +5,8 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
 	if (!getCurrentAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	const id = Number(params.id);
