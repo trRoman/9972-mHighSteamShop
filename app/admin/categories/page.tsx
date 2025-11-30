@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { getCurrentAdminFromCookies } from "@/lib/auth";
 import AdminCategoriesTable from "@/components/AdminCategoriesTable";

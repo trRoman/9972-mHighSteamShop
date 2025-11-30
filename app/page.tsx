@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import ProductList from "@/components/ProductList";
 
 export default function HomePage() {
