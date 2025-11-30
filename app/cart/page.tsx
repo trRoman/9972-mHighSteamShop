@@ -94,11 +94,11 @@ export default function CartPage() {
 
 	// initial load
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	(useState(() => { loadOrders(); }), []);
+	useEffect(() => { loadOrders(); }, []);
 
 	// poll for order status updates without page reload
 	// refresh periodically when there are orders
-	(useState(() => {
+	useEffect(() => {
 		const onVisible = () => {
 			if (document.visibilityState === "visible") loadOrders();
 		};
@@ -115,7 +115,7 @@ export default function CartPage() {
 			document.removeEventListener("visibilitychange", onVisible);
 			if (timer) clearInterval(timer);
 		};
-	}), [orders.length]);
+	}, [orders.length]);
 
 	function handleCheckout() {
 		if (!custName.trim() || !maskedPhone.trim()) {
