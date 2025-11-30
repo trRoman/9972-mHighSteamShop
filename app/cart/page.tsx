@@ -1,6 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
