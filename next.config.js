@@ -3,6 +3,11 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   eslint: { ignoreDuringBuilds: true },
+  images: {
+    // Используем уже оптимизированные на сервере файлы без _next/image,
+    // чтобы не было 400 при динамически загружаемых файлах
+    unoptimized: true
+  },
   async headers() {
     return [
       {
@@ -18,7 +23,10 @@ const nextConfig = {
   },
   experimental: {
     typedRoutes: true,
-    serverComponentsExternalPackages: ["sharp"]
+    serverComponentsExternalPackages: ["sharp"],
+    outputFileTracingExcludes: {
+      "*": ["**/public/products/**"]
+    }
   }
 };
 
