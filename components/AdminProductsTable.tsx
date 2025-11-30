@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
 
 type Product = {
 	id: number;
@@ -24,6 +26,10 @@ export default function AdminProductsTable() {
 	const [newPrice, setNewPrice] = useState<number>(0);
 	const [newCategorySlug, setNewCategorySlug] = useState<string>("");
 	const [newImage, setNewImage] = useState<File | null>(null);
+
+	// toast
+	const [toastOpen, setToastOpen] = useState(false);
+	const [toastMsg, setToastMsg] = useState<string>("");
 
 	async function load() {
 		setLoading(true);
@@ -115,7 +121,11 @@ export default function AdminProductsTable() {
 			body: JSON.stringify({ name: p.name, description: p.description, price: p.price })
 		});
 		if (!res.ok) {
-			alert("Ошибка сохранения");
+			setToastMsg("Ошибка сохранения");
+			setToastOpen(true);
+		} else {
+			setToastMsg("Изменения сохранены");
+			setToastOpen(true);
 		}
 	}
 
@@ -318,6 +328,17 @@ export default function AdminProductsTable() {
 				))}
 			</div>
 			{loading && <div className="p-3 text-gray-600">Загрузка…</div>}
+
+			<Snackbar
+				open={toastOpen}
+				autoHideDuration={3000}
+				onClose={() => setToastOpen(false)}
+				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+			>
+				<MuiAlert elevation={6} variant="filled" severity="success" onClose={() => setToastOpen(false)}>
+					{toastMsg}
+				</MuiAlert>
+			</Snackbar>
 		</div>
 	);
 }
