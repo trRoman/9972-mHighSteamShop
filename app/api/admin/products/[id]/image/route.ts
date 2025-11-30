@@ -4,7 +4,6 @@ import { getCurrentAdmin } from "@/lib/auth";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import sharp from "sharp";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
 	if (!getCurrentAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -13,6 +12,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	const form = await req.formData();
 	const file = form.get("file") as File | null;
 	if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
+
+	// lazy import sharp to avoid bundling issues
+	const sharp = (await import("sharp")).default;
 
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = Buffer.from(arrayBuffer);

@@ -17,7 +17,8 @@ const nextConfig = {
     ];
   },
   experimental: {
-    typedRoutes: true
+    typedRoutes: true,
+    serverComponentsExternalPackages: ["sharp"]
   }
 };
 
