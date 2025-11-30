@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
+import Image from "next/image";
 
 export type Product = {
 	id: number;
@@ -23,6 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
 	const [toastOpen, setToastOpen] = useState(false);
 	const [toastMsg, setToastMsg] = useState<string>("");
 	const [isAdded, setIsAdded] = useState(false);
+	const [imgLoaded, setImgLoaded] = useState(false);
 
 	function handleAdd() {
 		addItem({ id: product.id, name: product.name, price: product.price, image: product.image }, qty);
@@ -33,12 +35,17 @@ export default function ProductCard({ product }: { product: Product }) {
 	}
 	return (
 		<div className="border overflow-hidden flex flex-col bg-white/70">
-			<div className="relative">
-				<img
+			<div className="relative aspect-[4/3]">
+				{/* skeleton placeholder */}
+				<div className={`absolute inset-0 bg-gray-200 ${imgLoaded ? "opacity-0" : "opacity-100 animate-pulse"} transition-opacity duration-500`} />
+				<Image
 					src={product.image}
 					alt={product.name}
-					className="w-full h-90 object-cover"
-					loading="lazy"
+					fill
+					sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+					className={`object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+					onLoadingComplete={() => setImgLoaded(true)}
+					priority={false}
 				/>
 				<div className="absolute top-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
 					★ {product.rating.toFixed(1)}

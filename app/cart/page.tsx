@@ -276,7 +276,10 @@ export default function CartPage() {
 								<img
 									src={it.image}
 									alt={it.name}
-									className="w-20 h-20 object-cover rounded self-center"
+									className="w-20 h-20 object-cover rounded self-center transition-opacity duration-300"
+									loading="lazy"
+									decoding="async"
+									fetchpriority="low"
 								/>
 								<div className="flex-1">
 									<div className="font-medium">{it.name}</div>

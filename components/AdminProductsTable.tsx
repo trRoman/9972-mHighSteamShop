@@ -197,7 +197,7 @@ export default function AdminProductsTable() {
 				</td>
 				<td className="px-3 py-2 w-64">
 					<div className="flex items-center gap-2">
-						<img src={p.image} alt="" className="w-16 h-16 object-cover rounded border" />
+						<img src={p.image} alt="" className="w-16 h-16 object-cover rounded border transition-opacity duration-300" loading="lazy" decoding="async" fetchpriority="low" />
 						<label className="text-sm">
 							<input
 								type="file"
@@ -300,7 +300,7 @@ export default function AdminProductsTable() {
 				{items.map((p) => (
 					<div key={`m-${p.id}`} className="border rounded p-3 bg-white">
 						<div className="flex items-start gap-3">
-							<img src={p.image} alt="" className="w-16 h-16 object-cover rounded border" />
+							<img src={p.image} alt="" className="w-16 h-16 object-cover rounded border transition-opacity duration-300" loading="lazy" decoding="async" fetchpriority="low" />
 							<div className="flex-1">
 								<div className="text-xs text-gray-500">ID: {p.id}</div>
 								<input className="mt-1 w-full border rounded px-2 py-1" value={p.name} onChange={(e) => {
