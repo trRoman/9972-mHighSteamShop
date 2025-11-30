@@ -5,7 +5,7 @@ import { getCurrentAdmin } from "@/lib/auth";
 export async function GET(req: NextRequest) {
 	if (!getCurrentAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	const db = getDb();
-	const rows = db.prepare("SELECT id, slug, name FROM categories ORDER BY name ASC").all();
+	const rows = db.prepare("SELECT id, slug, name, is_default FROM categories ORDER BY name ASC").all();
 	return NextResponse.json({ items: rows });
 }
 

@@ -82,6 +82,7 @@ function initSchema(db: Database.Database) {
 	`);
 	ensureMigrationsTable(db);
 	seed(db);
+	migrateCategoriesDefault(db);
 	migrateProducts4(db);
 	finalizeProductsRename(db);
 	migrateOrdersClientToken(db);
@@ -248,6 +249,26 @@ function migrateOrderItemsChecked(db: Database.Database) {
 	const hasChecked = columns.some(c => c.name === "checked");
 	if (!hasChecked) db.exec(`ALTER TABLE order_items ADD COLUMN checked INTEGER NOT NULL DEFAULT 0`);
 	markMigration(db, "migrate_order_items_checked");
+}
+
+function migrateCategoriesDefault(db: Database.Database) {
+	if (hasMigration(db, "migrate_categories_default")) return;
+	const columns = db.prepare(`PRAGMA table_info('categories')`).all() as Array<{ name: string }>;
+	const hasDefault = columns.some(c => c.name === "is_default");
+	if (!hasDefault) {
+		db.exec(`ALTER TABLE categories ADD COLUMN is_default INTEGER NOT NULL DEFAULT 0`);
+	}
+	// ensure exactly one default (set first category as default if none)
+	const def = db.prepare(`SELECT id FROM categories WHERE is_default = 1 LIMIT 1`).get() as { id?: number } | undefined;
+	if (!def || !def.id) {
+		db.exec(`
+			UPDATE categories SET is_default = 0;
+			UPDATE categories SET is_default = 1 WHERE id = (SELECT id FROM categories ORDER BY id ASC LIMIT 1);
+		`);
+	}
+	// partial unique index ensures only one default
+	db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_single_default ON categories(is_default) WHERE is_default = 1`);
+	markMigration(db, "migrate_categories_default");
 }
 
 

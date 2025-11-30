@@ -4,7 +4,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Category = { id: number; slug: string; name: string };
+type Category = { id: number; slug: string; name: string; is_default?: number };
 
 export default function AdminCategoriesTable() {
 	const [items, setItems] = useState<Category[]>([]);
@@ -29,6 +29,20 @@ export default function AdminCategoriesTable() {
 	}
 
 	useEffect(() => { load(); }, []);
+
+	async function setDefaultCategory(id: number) {
+		const res = await fetch(`/api/admin/categories/${id}`, {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ is_default: true })
+		});
+		if (!res.ok) {
+			const data = await res.json().catch(() => ({}));
+			alert(data.error ?? "Не удалось установить категорию по умолчанию");
+		} else {
+			load();
+		}
+	}
 
 	async function saveRow(c: Category) {
 		const res = await fetch(`/api/admin/categories/${c.id}`, {
@@ -96,6 +110,15 @@ export default function AdminCategoriesTable() {
 						<input className="mt-2 w-full border rounded px-2 py-1" value={c.name} onChange={(e) => {
 							const val = e.target.value; setItems(prev => prev.map(x => x.id === c.id ? { ...x, name: val } : x));
 						}} />
+						<label className="mt-3 flex items-center gap-2">
+							<input
+								type="radio"
+								name="default-category-mobile"
+								checked={c.is_default === 1}
+								onChange={() => setDefaultCategory(c.id)}
+							/>
+							<span>По умолчанию</span>
+						</label>
 						<div className="mt-3 flex gap-2">
 							<button className="flex-1 px-3 py-2 border rounded hover:bg-gray-100" onClick={() => saveRow(c)}>Сохранить</button>
 							<button className="flex-1 px-3 py-2 border rounded text-red-600 hover:bg-red-50" onClick={() => deleteRow(c.id)}>Удалить</button>
@@ -110,6 +133,7 @@ export default function AdminCategoriesTable() {
 						<th className="text-left px-3 py-2">ID</th>
 						<th className="text-left px-3 py-2">Slug</th>
 						<th className="text-left px-3 py-2">Название</th>
+						<th className="text-left px-3 py-2">По умолчанию</th>
 						<th className="px-3 py-2"></th>
 					</tr>
 				</thead>
@@ -126,6 +150,15 @@ export default function AdminCategoriesTable() {
 								<input className="w-full border rounded px-2 py-1" value={c.name} onChange={(e) => {
 									const val = e.target.value; setItems(prev => prev.map(x => x.id === c.id ? { ...x, name: val } : x));
 								}} />
+							</td>
+							<td className="px-3 py-2">
+								<input
+									type="radio"
+									name="default-category"
+									checked={c.is_default === 1}
+									onChange={() => setDefaultCategory(c.id)}
+									aria-label="Сделать категорией по умолчанию"
+								/>
 							</td>
 							<td className="px-3 py-2">
 								<div className="flex gap-2">

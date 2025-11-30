@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 
-type Category = { id: number; slug: string; name: string };
+type Category = { id: number; slug: string; name: string; is_default?: number };
 
 export default function CategoryBar() {
 	const [items, setItems] = useState<Category[]>([]);
@@ -20,6 +20,20 @@ export default function CategoryBar() {
 		})();
 		return () => { ignore = true; };
 	}, []);
+
+	// If no explicit category selected, switch to default category (if exists)
+	useEffect(() => {
+		if (!active && items.length > 0) {
+			const def = items.find(c => c.is_default === 1);
+			if (def) {
+				const qs = new URLSearchParams(Array.from(params.entries()));
+				qs.set("category", def.slug);
+				const href = (`/?${qs.toString()}`) as Route;
+				router.replace(href, { scroll: true });
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [items, active]);
 
 	const setCategory = (slug: string) => {
 		const qs = new URLSearchParams(Array.from(params.entries()));
