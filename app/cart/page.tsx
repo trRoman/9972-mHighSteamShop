@@ -279,7 +279,7 @@ export default function CartPage() {
 									className="w-20 h-20 object-cover rounded self-center transition-opacity duration-300"
 									loading="lazy"
 									decoding="async"
-									fetchpriority="low"
+									fetchPriority="low"
 								/>
 								<div className="flex-1">
 									<div className="font-medium">{it.name}</div>
