@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState, useCallback } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 
@@ -114,11 +114,11 @@ export default function AdminProductsTable() {
 		}
 	}
 
-	async function saveRow(p: Product) {
-		const res = await fetch(`/api/admin/products/${p.id}`, {
+	const saveRow = useCallback(async (id: number, name: string, description: string, price: number) => {
+		const res = await fetch(`/api/admin/products/${id}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ name: p.name, description: p.description, price: p.price })
+			body: JSON.stringify({ name, description, price })
 		});
 		if (!res.ok) {
 			setToastMsg("Ошибка сохранения");
@@ -126,8 +126,10 @@ export default function AdminProductsTable() {
 		} else {
 			setToastMsg("Изменения сохранены");
 			setToastOpen(true);
+			// актуализируем локальный список без полной перезагрузки
+			setItems(prev => prev.map(x => x.id === id ? { ...x, name, description, price } : x));
 		}
-	}
+	}, []);
 
 	async function deleteRow(id: number) {
 		if (!confirm("Удалить товар?")) return;
@@ -139,7 +141,7 @@ export default function AdminProductsTable() {
 		}
 	}
 
-	async function uploadImage(id: number, file: File) {
+	const uploadImage = useCallback(async (id: number, file: File) => {
 		const fd = new FormData();
 		fd.append("file", file);
 		const res = await fetch(`/api/admin/products/${id}/image`, {
@@ -147,11 +149,75 @@ export default function AdminProductsTable() {
 			body: fd
 		});
 		if (res.ok) {
+			// подтянем обновлённый список (URL картинки меняется)
 			load();
 		} else {
 			alert("Ошибка загрузки изображения");
 		}
-	}
+	}, []);
+
+	const grouped = useMemo(() => groupByCategory(items), [items]);
+
+	type ProductRowProps = {
+		p: Product;
+		onSave: (id: number, name: string, description: string, price: number) => Promise<void>;
+		onDelete: (id: number) => Promise<void> | void;
+		onUpload: (id: number, file: File) => Promise<void>;
+	};
+
+	const ProductRow = memo(function ProductRowInner({ p, onSave, onDelete, onUpload }: ProductRowProps) {
+		const [name, setName] = useState(p.name);
+		const [description, setDescription] = useState(p.description);
+		const [price, setPrice] = useState<number>(p.price);
+
+		// обновляем локальные поля, если пришли новые данные
+		useEffect(() => { setName(p.name); }, [p.name]);
+		useEffect(() => { setDescription(p.description); }, [p.description]);
+		useEffect(() => { setPrice(p.price); }, [p.price]);
+
+		return (
+			<tr className="border-t align-top">
+				<td className="px-3 py-2">{p.id}</td>
+				<td className="px-3 py-2 w-64">
+					<input className="w-full border rounded px-2 py-1" value={name} onChange={(e) => setName(e.target.value)} />
+				</td>
+				<td className="px-3 py-2 w-[28rem]">
+					<textarea className="w-full border rounded px-2 py-1 h-20" value={description} onChange={(e) => setDescription(e.target.value)} />
+				</td>
+				<td className="px-3 py-2 w-32">
+					<input
+						type="number"
+						className="w-full border rounded px-2 py-1"
+						value={Number.isFinite(price) ? price : 0}
+						onChange={(e) => setPrice(Number(e.target.value || 0))}
+					/>
+				</td>
+				<td className="px-3 py-2 w-64">
+					<div className="flex items-center gap-2">
+						<img src={p.image} alt="" className="w-16 h-16 object-cover rounded border" />
+						<label className="text-sm">
+							<input
+								type="file"
+								accept="image/*"
+								className="hidden"
+								onChange={(e) => {
+									const file = e.target.files?.[0];
+									if (file) onUpload(p.id, file);
+								}}
+							/>
+							<span className="px-2 py-1 border rounded cursor-pointer hover:bg-gray-100">Загрузить</span>
+						</label>
+					</div>
+				</td>
+				<td className="px-3 py-2">
+					<div className="flex gap-2">
+						<button className="px-3 py-1 border rounded hover:bg-gray-100" onClick={() => onSave(p.id, name, description, price)}>Сохранить</button>
+						<button className="px-3 py-1 border rounded text-red-600 hover:bg-red-50" onClick={() => onDelete(p.id)}>Удалить</button>
+					</div>
+				</td>
+			</tr>
+		);
+	});
 
 	return (
 		<div className="overflow-x-auto bg-white/70 border rounded">
@@ -266,7 +332,7 @@ export default function AdminProductsTable() {
 			</div>
 			{/* Desktop tables (sm and up) */}
 			<div className="hidden sm:block">
-				{Object.entries(groupByCategory(items)).map(([cat, rows]) => (
+				{Object.entries(grouped).map(([cat, rows]) => (
 					<div key={cat}>
 						<div className="bg-gray-50 px-3 py-2 font-medium">{cat}</div>
 						<table className="min-w-full text-sm">
@@ -282,45 +348,7 @@ export default function AdminProductsTable() {
 							</thead>
 							<tbody>
 								{rows.map((p) => (
-									<tr key={p.id} className="border-t align-top">
-										<td className="px-3 py-2">{p.id}</td>
-										<td className="px-3 py-2 w-64">
-											<input className="w-full border rounded px-2 py-1" value={p.name} onChange={(e) => {
-												const val = e.target.value;
-												setItems(prev => prev.map(x => x.id === p.id ? { ...x, name: val } : x));
-											}} />
-										</td>
-										<td className="px-3 py-2 w-[28rem]">
-											<textarea className="w-full border rounded px-2 py-1 h-20" value={p.description} onChange={(e) => {
-												const val = e.target.value;
-												setItems(prev => prev.map(x => x.id === p.id ? { ...x, description: val } : x));
-											}} />
-										</td>
-										<td className="px-3 py-2 w-32">
-											<input type="number" className="w-full border rounded px-2 py-1" value={p.price} onChange={(e) => {
-												const val = Number(e.target.value || 0);
-												setItems(prev => prev.map(x => x.id === p.id ? { ...x, price: val } : x));
-											}} />
-										</td>
-										<td className="px-3 py-2 w-64">
-											<div className="flex items-center gap-2">
-												<img src={p.image} alt="" className="w-16 h-16 object-cover rounded border" />
-												<label className="text-sm">
-													<input type="file" accept="image/*" className="hidden" onChange={(e) => {
-														const file = e.target.files?.[0];
-														if (file) uploadImage(p.id, file);
-													}} />
-													<span className="px-2 py-1 border rounded cursor-pointer hover:bg-gray-100">Загрузить</span>
-												</label>
-											</div>
-										</td>
-										<td className="px-3 py-2">
-											<div className="flex gap-2">
-												<button className="px-3 py-1 border rounded hover:bg-gray-100" onClick={() => saveRow(p)}>Сохранить</button>
-												<button className="px-3 py-1 border rounded text-red-600 hover:bg-red-50" onClick={() => deleteRow(p.id)}>Удалить</button>
-											</div>
-										</td>
-									</tr>
+									<ProductRow key={p.id} p={p} onSave={saveRow} onDelete={deleteRow} onUpload={uploadImage} />
 								))}
 							</tbody>
 						</table>
