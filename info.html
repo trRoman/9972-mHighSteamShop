@@ -12,6 +12,12 @@ IP-адрес 193.227.240.138
 Пароль: Wc8Mak8wtZShOxqP
 
 cd /root/9972-mhighsteamshop
+git fetch origin --prune
+git reset --hard origin/main
+git clean -fd
+yarn install
+yarn build
+sudo systemctl restart nextjs-mhighsteam
 
 git@github.com:trRoman/9972-mHighSteamShop.git
 
