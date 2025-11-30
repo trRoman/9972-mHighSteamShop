@@ -14,6 +14,9 @@ export async function GET(req: NextRequest) {
 	else if (sort === "rating") orderBy = "p.rating DESC";
 	else if (sort === "name") orderBy = "p.name ASC";
 
+	// Если категория не выбрана, показываем товары категории по умолчанию первыми
+	const fullOrderBy = category ? orderBy : `c.is_default DESC, ${orderBy}`;
+
 	const where: string[] = [];
 	const params: any[] = [];
 	if (category) {
@@ -42,7 +45,7 @@ export async function GET(req: NextRequest) {
 		 FROM products p
 		 JOIN categories c ON c.id = p.category_id
 		 ${whereSql}
-		 ORDER BY ${orderBy}
+		 ORDER BY ${fullOrderBy}
 		 LIMIT ? OFFSET ?`
 	).all(...params, limit, offset) as Array<{
 		id: number; name: string; description: string; price: number; rating: number; image: string; category: string;

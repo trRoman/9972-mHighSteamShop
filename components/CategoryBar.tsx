@@ -17,7 +17,16 @@ export default function CategoryBar() {
 		(async () => {
 			const res = await fetch("/api/categories");
 			const data = await res.json();
-			if (!ignore) setItems(data.items as Category[]);
+			if (!ignore) {
+				const arr = (data.items as Category[]).slice();
+				arr.sort((a, b) => {
+					const da = a.is_default === 1 ? 1 : 0;
+					const db = b.is_default === 1 ? 1 : 0;
+					if (db - da !== 0) return db - da; // default first
+					return a.id - b.id; // then by id asc
+				});
+				setItems(arr);
+			}
 		})();
 		return () => { ignore = true; };
 	}, []);

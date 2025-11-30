@@ -18,6 +18,8 @@ git clean -fd
 yarn install
 yarn build
 sudo systemctl restart nextjs-mhighsteam
+sudo systemctl status nextjs-mhighsteam --no-pager -l
+curl -I http://127.0.0.1:3010
 
 git@github.com:trRoman/9972-mHighSteamShop.git
 
@@ -44,3 +46,8 @@ git commit -m "update"
 git push
 
 git pull
+
+# жёстко обновить код с origin/main
+git fetch origin --prune
+git reset --hard origin/main
+git clean -fd

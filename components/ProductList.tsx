@@ -17,8 +17,6 @@ type ApiResponse = {
 export default function ProductList() {
 	const params = useSearchParams();
 	const category = params.get("category") ?? "";
-	const [defaultSlug, setDefaultSlug] = useState<string>("");
-	const [defaultReady, setDefaultReady] = useState(false);
 
 	const [items, setItems] = useState<Product[]>([]);
 	const [page, setPage] = useState(1);
@@ -26,41 +24,17 @@ export default function ProductList() {
 	const [loading, setLoading] = useState(false);
 	const observerRef = useRef<HTMLDivElement | null>(null);
 
-	// Загружаем категорию по умолчанию один раз
-	useEffect(() => {
-		let ignore = false;
-		(async () => {
-			try {
-				const res = await fetch("/api/categories");
-				if (!res.ok) throw new Error();
-				const data = await res.json();
-				const def = (data.items as Array<{ slug: string; is_default?: number }>).find(c => c.is_default === 1);
-				if (!ignore) {
-					setDefaultSlug(def?.slug ?? "");
-					setDefaultReady(true);
-				}
-			} catch {
-				if (!ignore) setDefaultReady(true);
-			}
-		})();
-		return () => { ignore = true; };
-	}, []);
-
-	const effectiveCategory = category || defaultSlug;
-
-	const resetKey = useMemo(() => `${effectiveCategory}`, [effectiveCategory]);
+	const resetKey = useMemo(() => `${category}`, [category]);
 
 	useEffect(() => {
 		let ignore = false;
 		async function load() {
-			// Ждём определения дефолтной категории, если параметр не задан
-			if (!category && !defaultReady) return;
 			setLoading(true);
 			try {
 				const url = new URL("/api/products", window.location.origin);
 				url.searchParams.set("page", String(page));
 				url.searchParams.set("limit", "10");
-				if (effectiveCategory) url.searchParams.set("category", effectiveCategory);
+				if (category) url.searchParams.set("category", category);
 				const res = await fetch(url.toString());
 				const data: ApiResponse = await res.json();
 				if (!ignore) {
@@ -73,7 +47,7 @@ export default function ProductList() {
 		}
 		load();
 		return () => { ignore = true; };
-	}, [page, category, defaultReady, effectiveCategory]);
+	}, [page, category]);
 
 	useEffect(() => {
 		setItems([]);
@@ -95,7 +69,7 @@ export default function ProductList() {
 		return () => {
 			io.disconnect();
 		};
-	}, [hasMore, loading, effectiveCategory]);
+	}, [hasMore, loading, category]);
 
 	return (
 		<>
