@@ -1,5 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
+import { Suspense } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
@@ -169,6 +170,7 @@ export default function CartPage() {
 	}
 
 	return (
+		<Suspense fallback={<div />}>
 		<div className="py-4 pb-24">
 			<h1 className="text-2xl font-semibold mb-4">Корзина</h1>
 			{/* Вкладки "Ваши заказы" */}
@@ -440,6 +442,7 @@ export default function CartPage() {
 				</DialogActions>
 			</Dialog>
 		</div>
+		</Suspense>
 	);
 }
 

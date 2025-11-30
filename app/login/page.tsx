@@ -1,5 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
+import { Suspense } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -33,6 +34,7 @@ export default function LoginPage() {
 	};
 
 	return (
+		<Suspense fallback={<div />}>
 		<div className="max-w-sm mx-auto py-10">
 			<h1 className="text-2xl font-semibold mb-6 text-center">Вход администратора</h1>
 			<form onSubmit={onSubmit} className="space-y-4">
@@ -66,6 +68,7 @@ export default function LoginPage() {
 				</button>
 			</form>
 		</div>
+		</Suspense>
 	);
 }
 
