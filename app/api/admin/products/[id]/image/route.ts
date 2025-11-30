@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
 	if (!getCurrentAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,11 +25,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	})();
 	const publicDir = path.join(process.cwd(), "public", "products");
 	if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
-	const fileName = `${id}.${ext}`;
+	// generate content hash to make a unique filename per upload
+	const hash = crypto.createHash("sha1").update(buffer).digest("hex").slice(0, 10);
+	const fileName = `${id}-${hash}.${ext}`;
 	const filePath = path.join(publicDir, fileName);
+
+	// cleanup old files for this product id to prevent stale assets
+	try {
+		for (const f of fs.readdirSync(publicDir)) {
+			if ((f.startsWith(`${id}-`) || f === `${id}.jpg` || f === `${id}.png` || f === `${id}.webp`) && f !== fileName) {
+				try { fs.unlinkSync(path.join(publicDir, f)); } catch {}
+			}
+		}
+	} catch {}
+
 	fs.writeFileSync(filePath, buffer);
-	// use cache-busting query param to avoid stale browser/proxy caches
-	const imageUrl = `/products/${fileName}?v=${Date.now()}`;
+	// final URL: unique path (no query needed)
+	const imageUrl = `/products/${fileName}`;
 
 	const db = getDb();
 	db.prepare("UPDATE products SET image = ? WHERE id = ?").run(imageUrl, id);
