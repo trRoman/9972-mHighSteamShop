@@ -1,3 +1,6 @@
+// components/AdminProductsTable.tsx
+// Этот компонент отображает таблицу товаров в административной панели
+
 "use client";
 import { memo, useEffect, useMemo, useState, useCallback } from "react";
 import Snackbar from "@mui/material/Snackbar";
@@ -324,7 +327,7 @@ export default function AdminProductsTable() {
 							</label>
 						</div>
 						<div className="mt-3 flex gap-2">
-							<button className="flex-1 px-3 py-2 border rounded hover:bg-gray-100" onClick={() => saveRow(p)}>Сохранить</button>
+							<button className="flex-1 px-3 py-2 border rounded hover:bg-gray-100" onClick={() => saveRow(p.id, p.name, p.description, p.price)}>Сохранить</button>
 							<button className="flex-1 px-3 py-2 border rounded text-red-600 hover:bg-red-50" onClick={() => deleteRow(p.id)}>Удалить</button>
 						</div>
 					</div>
