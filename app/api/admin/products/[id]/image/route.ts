@@ -15,8 +15,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	const file = form.get("file") as File | null;
 	if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
-	// lazy import sharp to avoid bundling issues
-	const sharp = (await import("sharp")).default;
+	// Пытаемся динамически импортировать sharp; если отсутствует на сервере — продолжим без сжатия
+	const SHARP_PKG = "sharp";
+	let sharp: any = null;
+	try {
+		// Используем переменную, чтобы избежать статического резолва на этапе сборки
+		sharp = (await import(/* webpackIgnore: true */ SHARP_PKG)).default;
+	} catch {}
 
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = Buffer.from(arrayBuffer);
@@ -38,13 +43,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 		}
 	} catch {}
 
-	// Оптимизация: ресайз до разумного максимума и сохранение в WebP (качество 80)
-	// Сохраняем ориентацию, не увеличиваем малые изображения
-	await sharp(buffer)
-		.rotate()
-		.resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
-		.webp({ quality: 80 })
-		.toFile(filePath);
+	if (sharp) {
+		// Оптимизация через sharp: ресайз до разумного максимума и сохранение в WebP (качество 80)
+		// Сохраняем ориентацию, не увеличиваем малые изображения
+		await sharp(buffer)
+			.rotate()
+			.resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
+			.webp({ quality: 80 })
+			.toFile(filePath);
+	} else {
+		// Резервный путь: сохранить оригинал как webp без перекодирования (минимальная совместимость)
+		// Если sharp отсутствует, просто пишем исходные данные (в исходном формате) под именем .webp
+		// Это обеспечит работу загрузки, но без оптимизации.
+		fs.writeFileSync(filePath, buffer);
+	}
 
 	// final URL: unique path (no query needed)
 	const imageUrl = `/products/${fileName}`;
