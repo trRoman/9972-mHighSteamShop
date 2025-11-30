@@ -31,8 +31,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	// generate content hash to make a unique filename per upload
 	const hash = crypto.createHash("sha1").update(buffer).digest("hex").slice(0, 10);
 	// Стандартизируем хранилище под WebP
-	const fileName = `${id}-${hash}.webp`;
-	const filePath = path.join(publicDir, fileName);
+	let fileName = `${id}-${hash}.webp`;
+	let filePath = path.join(publicDir, fileName);
 
 	// cleanup old files for this product id to prevent stale assets
 	try {
@@ -52,10 +52,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 			.webp({ quality: 80 })
 			.toFile(filePath);
 	} else {
-		// Резервный путь: сохранить оригинал как webp без перекодирования (минимальная совместимость)
-		// Если sharp отсутствует, просто пишем исходные данные (в исходном формате) под именем .webp
-		// Это обеспечит работу загрузки, но без оптимизации.
-		fs.writeFileSync(filePath, buffer);
+		// Резервный путь: сохраняем файл в исходном формате и расширении
+		const mt = (file.type || "").toLowerCase();
+		const origExt = mt.includes("png") ? "png" : mt.includes("webp") ? "webp" : "jpg";
+		fileName = `${id}-${hash}.${origExt}`;
+		filePath = path.join(publicDir, fileName);
+		fs.writeFileSync(filePath, buffer); // без оптимизации
 	}
 
 	// final URL: unique path (no query needed)
