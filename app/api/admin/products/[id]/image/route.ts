@@ -27,7 +27,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	const fileName = `${id}.${ext}`;
 	const filePath = path.join(publicDir, fileName);
 	fs.writeFileSync(filePath, buffer);
-	const imageUrl = `/products/${fileName}`;
+	// use cache-busting query param to avoid stale browser/proxy caches
+	const imageUrl = `/products/${fileName}?v=${Date.now()}`;
 
 	const db = getDb();
 	db.prepare("UPDATE products SET image = ? WHERE id = ?").run(imageUrl, id);
