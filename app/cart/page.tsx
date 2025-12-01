@@ -79,9 +79,9 @@ export default function CartPage() {
 				id: o.id,
 				createdAt: o.createdAt ?? o.created_at,
 				status: o.status,
-				name: custName,
-				phone: maskedPhone,
-				address: custAddress,
+				name: o.customer_name ?? "",
+				phone: o.customer_phone ?? "",
+				address: o.customer_address ?? "",
 				items: (o.items || []).map((it: any) => ({
 					id: it.id, name: it.name, price: it.price, quantity: it.quantity, image: it.image
 				})),
