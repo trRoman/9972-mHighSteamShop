@@ -39,6 +39,7 @@ export default function CartPage() {
 	const [orderTab, setOrderTab] = useState(0);
 	const [confirmOrderOpen, setConfirmOrderOpen] = useState(false);
 	const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
+	const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
 
 	// phone mask helpers (+7-(XXX)-XX-XX-XX)
 	function maskFromDigits(d: string) {
@@ -273,14 +274,18 @@ export default function CartPage() {
 					<div className="lg:col-span-2 space-y-4">
 						{items.map((it) => (
 							<div key={it.id} className="bg-white/70 flex items-start gap-4 p-4 border rounded-md">
-								<img
-									src={it.image}
-									alt={it.name}
-									className="w-20 h-20 object-cover rounded self-center transition-opacity duration-300"
-									loading="lazy"
-									decoding="async"
-									fetchPriority="low"
-								/>
+								<div className="relative w-20 h-20 shrink-0">
+									<div className={`absolute inset-0 bg-gray-200 rounded ${loadedImages[it.id] ? "opacity-0" : "opacity-100 animate-pulse"} transition-opacity duration-500`} />
+									<img
+										src={it.image}
+										alt={it.name}
+										className={`absolute inset-0 w-full h-full object-cover rounded transition-opacity duration-500 ${loadedImages[it.id] ? "opacity-100" : "opacity-0"}`}
+										onLoad={() => setLoadedImages(prev => ({ ...prev, [it.id]: true }))}
+										loading="lazy"
+										decoding="async"
+										fetchPriority="low"
+									/>
+								</div>
 								<div className="flex-1">
 									<div className="font-medium">{it.name}</div>
 									<div className="mt-2 text-lg font-semibold text-gray-800">{it.price.toLocaleString()} ₽</div>
