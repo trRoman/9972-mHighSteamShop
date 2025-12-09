@@ -46,11 +46,26 @@ export async function POST(req: NextRequest) {
 	if (!body || !body.name || !body.description || typeof body.price !== "number" || !body.category_id) {
 		return NextResponse.json({ error: "Bad request" }, { status: 400 });
 	}
-	const image = "/products/drinks.svg";
+	// Получим категорию, чтобы сформировать placeholder-картинку и вернуть метаданные
+	const cat = db.prepare("SELECT slug, name FROM categories WHERE id = ?").get(body.category_id) as { slug?: string; name?: string } | undefined;
+	if (!cat || !cat.slug) {
+		return NextResponse.json({ error: "Unknown category" }, { status: 400 });
+	}
+	const image = `/products/${cat.slug}.svg`;
+	const price = Math.max(0, Math.floor(body.price));
 	const info = db.prepare("INSERT INTO products (name, description, price, rating, image, category_id) VALUES (?, ?, ?, 0, ?, ?)").run(
-		body.name, body.description, Math.max(0, Math.floor(body.price)), image, body.category_id
+		body.name, body.description, price, image, body.category_id
 	);
-	return NextResponse.json({ id: info.lastInsertRowid });
+	const id = Number(info.lastInsertRowid);
+	return NextResponse.json({
+		id,
+		name: body.name,
+		description: body.description,
+		price,
+		image,
+		category_slug: cat.slug,
+		category_name: cat.name ?? cat.slug
+	}, { headers: { "Cache-Control": "no-store" } });
 }
 
 

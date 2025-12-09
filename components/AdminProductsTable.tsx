@@ -98,20 +98,36 @@ export default function AdminProductsTable() {
 				const data = await res.json().catch(() => ({}));
 				throw new Error(data.error ?? "Ошибка создания");
 			}
-			const data = await res.json();
-			const id = Number(data.id);
-			if (newImage && id) {
+			// API теперь возвращает созданный товар целиком
+			const created = await res.json() as Product & { category_slug?: string; category_name?: string };
+			let finalImage = created.image;
+			// Если приложили картинку — загружаем и обновляем ссылку
+			if (newImage && created.id) {
 				const fd = new FormData();
 				fd.append("file", newImage);
-				await fetch(`/api/admin/products/${id}/image`, { method: "POST", body: fd });
+				const up = await fetch(`/api/admin/products/${created.id}/image`, { method: "POST", body: fd });
+				if (up.ok) {
+					const j = await up.json().catch(() => ({} as any));
+					if (j && j.image) finalImage = j.image;
+				}
 			}
+			// Оптимистично добавим товар в список без полной перезагрузки
+			const newItem: Product = {
+				id: created.id,
+				name: newName.trim(),
+				description: newDescription.trim(),
+				price: Math.max(0, Math.floor(newPrice || 0)),
+				image: finalImage,
+				category_slug: created.category_slug,
+				category_name: created.category_name
+			};
+			setItems(prev => [newItem, ...prev]);
 			// reset
 			setNewName("");
 			setNewDescription("");
 			setNewPrice(0);
 			setNewCategorySlug("");
 			setNewImage(null);
-			load();
 		} catch (e: any) {
 			alert(e.message ?? "Ошибка");
 		}
@@ -134,7 +150,7 @@ export default function AdminProductsTable() {
 		}
 	}, []);
 
-	async function deleteRow(id: number) {
+	const deleteRow = useCallback(async (id: number) => {
 		if (!confirm("Удалить товар?")) return;
 		const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
 		if (res.ok) {
@@ -142,7 +158,7 @@ export default function AdminProductsTable() {
 		} else {
 			alert("Ошибка удаления");
 		}
-	}
+	}, []);
 
 	const uploadImage = useCallback(async (id: number, file: File) => {
 		const fd = new FormData();
