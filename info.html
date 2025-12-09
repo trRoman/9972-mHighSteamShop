@@ -46,6 +46,7 @@ cd /root/9972-mhighsteamshop
 git fetch origin --prune
 git reset --hard origin/main
 yarn build
+sudo systemctl reload nginx
 sudo systemctl restart nextjs-mhighsteam
 
 // изменить сервис
