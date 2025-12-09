@@ -5,6 +5,11 @@ mhighsteam.ru/login
 E-mail: admin@ya.ru
 Пароль: 4321q
 
+Сайт меню бани
+reg.ru
+mHighSTEAM.ru
+ab.asatryan.015@mail.ru
+v9z-Yeb-hfi-6hg
 
 IP-адрес 193.227.240.138
 Доступ к серверу
@@ -17,6 +22,7 @@ git reset --hard origin/main
 git clean -fd
 yarn install
 yarn build
+sudo nginx -t
 sudo systemctl restart nextjs-mhighsteam
 sudo systemctl status nextjs-mhighsteam --no-pager -l
 curl -I http://127.0.0.1:3010
@@ -28,18 +34,6 @@ yarn build
 yarn start
 yarn dev
 yarn cache clean
-
-yarn test
-yarn lint
-yarn format
-yarn typecheck
-yarn build
-yarn dev
-yarn test
-yarn lint
-yarn format
-yarn typecheck
-yarn build
 
 git add .
 git commit -m "обновил"
@@ -53,5 +47,13 @@ git fetch origin --prune
 git reset --hard origin/main
 yarn build
 sudo systemctl restart nextjs-mhighsteam
+
+// изменить сервис
+sudo systemctl edit --full nextjs-mhighsteam.service
+
+ls -la
+cp data/shop.db_backup9.db data/shop.db
+cp data/shop.db data/shop_backup9-1.db
+rm data/shop.db
 
 sudo nano /etc/nginx/sites-available/mhighsteam
