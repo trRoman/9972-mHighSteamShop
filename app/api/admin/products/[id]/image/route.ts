@@ -46,21 +46,30 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 		}
 	} catch {}
 
+	// Пишем файл: сначала пытаемся через sharp, при любой ошибке — надёжный fallback на обычную запись
+	let wrote = false;
 	if (sharp) {
-		// Оптимизация через sharp: ресайз до разумного максимума и сохранение в WebP (качество 80)
-		// Сохраняем ориентацию, не увеличиваем малые изображения
-		await sharp(buffer)
-			.rotate()
-			.resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
-			.webp({ quality: 80 })
-			.toFile(filePath);
-	} else {
+		try {
+			// Оптимизация через sharp: ресайз до разумного максимума и сохранение в WebP (качество 80)
+			// Сохраняем ориентацию, не увеличиваем малые изображения
+			await sharp(buffer)
+				.rotate()
+				.resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
+				.webp({ quality: 80 })
+				.toFile(filePath);
+			wrote = true;
+		} catch {
+			// игнорируем и перейдём к резервной записи
+		}
+	}
+	if (!wrote) {
 		// Резервный путь: сохраняем файл в исходном формате и расширении
 		const mt = (file.type || "").toLowerCase();
 		const origExt = mt.includes("png") ? "png" : mt.includes("webp") ? "webp" : "jpg";
 		fileName = `${id}-${hash}.${origExt}`;
 		filePath = path.join(publicDir, fileName);
 		fs.writeFileSync(filePath, buffer); // без оптимизации
+		wrote = true;
 	}
 
 	// final URL: unique path (no query needed)
