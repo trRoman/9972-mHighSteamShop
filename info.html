@@ -48,6 +48,8 @@ git reset --hard origin/main
 yarn build
 sudo systemctl reload nginx
 sudo systemctl restart nextjs-mhighsteam
+sudo systemctl stop nextjs-mhighsteam
+sudo systemctl status nextjs-mhighsteam --no-pager -l
 
 // изменить сервис
 sudo systemctl edit --full nextjs-mhighsteam.service
