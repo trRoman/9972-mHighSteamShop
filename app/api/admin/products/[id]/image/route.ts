@@ -26,7 +26,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = Buffer.from(arrayBuffer);
 
-	const publicDir = path.join(process.cwd(), "public", "products");
+	// Корневая папка хранения изображений: можно задать через ENV (PRODUCTS_DIR)
+	const publicDir = process.env.PRODUCTS_DIR
+		? process.env.PRODUCTS_DIR
+		: path.join(process.cwd(), "public", "products");
 	if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 	// generate content hash to make a unique filename per upload
 	const hash = crypto.createHash("sha1").update(buffer).digest("hex").slice(0, 10);
