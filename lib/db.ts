@@ -144,15 +144,18 @@ function seed(db: Database.Database) {
 		for (let i = 1; i <= 30; i++) addProduct("drinks", i, "Напиток", 200);
 	}
 
-	// seed admin if none
-	// ensure admin with requested credentials exists/updated
-	const adminEmail = "admin@ya.ru";
-	const adminPassword = "4321q";
-	const passwordHash = bcrypt.hashSync(adminPassword, 10);
-	db.prepare(`
-		INSERT INTO admins (email, password_hash) VALUES (?, ?)
-		ON CONFLICT(email) DO UPDATE SET password_hash=excluded.password_hash
-	`).run(adminEmail, passwordHash);
+	// seed admin (однократно, если отсутствует). Не перезаписывать существующий пароль.
+	const adminEmail = process.env.ADMIN_EMAIL;
+	const adminPassword = process.env.ADMIN_PASSWORD;
+	const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH; // предпочтительно передавать готовый bcrypt-хэш
+	if (adminEmail && (adminPassword || adminPasswordHash)) {
+		const exists = db.prepare("SELECT 1 FROM admins WHERE email = ?").get(adminEmail) as { 1?: number } | undefined;
+		if (!exists) {
+			const hash = adminPasswordHash ?? bcrypt.hashSync(adminPassword as string, 12);
+			db.prepare(`INSERT INTO admins (email, password_hash) VALUES (?, ?)`)
+				.run(adminEmail, hash);
+		}
+	}
 
 	// migrate existing remote images to local category placeholders
 	db.exec(`
