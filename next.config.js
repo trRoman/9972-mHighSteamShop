@@ -13,7 +13,7 @@ const nextConfig = {
       {
         source: '/products/:path*',
         headers: [
-          // disable caching for product images to reflect uploads immediately
+          // Выключаем кэширование для продуктов
           { key: 'Cache-Control', value: 'private, no-cache, no-store, must-revalidate' },
           { key: 'Pragma', value: 'no-cache' },
           { key: 'Expires', value: '0' },

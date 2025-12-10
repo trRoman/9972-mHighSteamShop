@@ -1,0 +1,119 @@
+{
+  "category_id": "5",
+  "items": [
+    {
+      "name": "Фанта жб",
+      "description": "0.3",
+      "price": 200,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Кола жб",
+      "description": "0.3",
+      "price": 200,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Пепси жб",
+      "description": "0.3",
+      "price": 200,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Спрайт жб",
+      "description": "0.3",
+      "price": 200,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Фанта стекло",
+      "description": "0.3",
+      "price": 240,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Кола стекло",
+      "description": "0.3",
+      "price": 300,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Липтон",
+      "description": "0.5",
+      "price": 190,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Кола",
+      "description": "0.5",
+      "price": 240,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Адреналин",
+      "description": "0.5",
+      "price": 320,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Адреналин",
+      "description": "0.25",
+      "price": 240,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Драйв",
+      "description": "0.5",
+      "price": 220,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Аква",
+      "description": "0.5",
+      "price": 120,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Боржоми",
+      "description": "0.5",
+      "price": 320,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Рычал су",
+      "description": "0.5",
+      "price": 240,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Джермук",
+      "description": "0.5",
+      "price": 280,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Натахарти",
+      "description": "0.5",
+      "price": 300,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Акваминерале",
+      "description": "0.5",
+      "price": 120,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Компот домашний",
+      "description": "0.5",
+      "price": 200,
+      "image_url": "/products/drinks.svg"
+    },
+    {
+      "name": "Мохито",
+      "description": "0.5",
+      "price": 200,
+      "image_url": "/products/drinks.svg"
+    }
+  ]
+}
