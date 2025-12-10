@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
+import fs from "fs";
+import path from "path";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
 	if (!getCurrentAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,6 +20,21 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 	const db = getDb();
 	const id = Number(params.id);
 	if (!id) return NextResponse.json({ error: "Bad request" }, { status: 400 });
+
+	// попытка удалить связанные файлы изображений этого товара
+	try {
+		const productsDir = process.env.PRODUCTS_DIR
+			? process.env.PRODUCTS_DIR
+			: path.join(process.cwd(), "public", "products");
+		if (fs.existsSync(productsDir)) {
+			for (const f of fs.readdirSync(productsDir)) {
+				if (f.startsWith(`${id}-`) || f === `${id}.jpg` || f === `${id}.png` || f === `${id}.webp`) {
+					try { fs.unlinkSync(path.join(productsDir, f)); } catch {}
+				}
+			}
+		}
+	} catch {}
+
 	db.prepare("DELETE FROM products WHERE id = ?").run(id);
 	return NextResponse.json({ ok: true });
 }
