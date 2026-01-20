@@ -126,8 +126,8 @@ export default function CartPage() {
 			return;
 		}
 		// validate phone mask +7-(XXX)-XX-XX-XX
-		if (!/^\+7-\(\d{3}\)-\d{2}-\d{2}-\d{2}$/.test(maskedPhone)) {
-			setToastMsg("Введите телефон в формате +7-(XXX)-XX-XX-XX");
+		if (!/^\+7-\(\d{3}\)-\d{3}-\d{2}-\d{2}$/.test(maskedPhone)) {
+			setToastMsg("Введите телефон в формате +7-(XXX)-XXX-XX-XX");
 			setToastSeverity("warning");
 			setToastOpen(true);
 			return;
