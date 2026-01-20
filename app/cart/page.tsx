@@ -44,22 +44,22 @@ export default function CartPage() {
 	// phone mask helpers (+7-(XXX)-XX-XX-XX)
 	function maskFromDigits(d: string) {
 		const a = d.slice(0, 3);
-		const b = d.slice(3, 5);
-		const c = d.slice(5, 7);
-		const e = d.slice(7, 9);
+		const b = d.slice(3, 6);
+		const c = d.slice(6, 8);
+		const e = d.slice(8, 10);
 		let formatted = "+7";
 		if (d.length > 0) formatted += "-(" + a;
 		if (d.length >= 3) formatted += ")";
 		if (d.length > 3) formatted += "-" + b;
-		if (d.length > 5) formatted += "-" + c;
-		if (d.length > 7) formatted += "-" + e;
+		if (d.length > 6) formatted += "-" + c;
+		if (d.length > 8) formatted += "-" + e;
 		return formatted;
 	}
 
 	const maskedPhone = maskFromDigits(phoneDigits);
 	let _prevMasked = maskedPhone;
 	function handlePhoneInput(raw: string) {
-		const digitsOnly = raw.replace(/\D/g, "").replace(/^7/, "").slice(0, 9);
+		const digitsOnly = raw.replace(/\D/g, "").replace(/^7/, "").slice(0, 10);
 		let newDigits = digitsOnly;
 		// If user deleted a formatting char (value length reduced but digits length didn't),
 		// remove one digit from the end to move back the mask.
@@ -252,9 +252,9 @@ export default function CartPage() {
 										required
 										type="tel"
 										inputMode="numeric"
-										pattern="^\+7-\(\d{3}\)-\d{2}-\d{2}-\d{2}$"
+										pattern="^\+7-\(\d{3}\)-\d{3}-\d{2}-\d{2}$"
 										className="w-full border rounded px-3 py-2"
-										placeholder="+7-(XXX)-XX-XX-XX"
+										placeholder="+7-(XXX)-XXX-XX-XX"
 										value={maskedPhone}
 										onChange={(e) => handlePhoneInput(e.target.value)}
 									/>
@@ -333,9 +333,9 @@ export default function CartPage() {
 										required
 										type="tel"
 										inputMode="numeric"
-										pattern="^\+7-\(\d{3}\)-\d{2}-\d{2}-\d{2}$"
+										pattern="^\+7-\(\d{3}\)-\d{3}-\d{2}-\d{2}$"
 										className="w-full border rounded px-3 py-2"
-										placeholder="+7-(XXX)-XX-XX-XX"
+										placeholder="+7-(XXX)-XXX-XX-XX"
 										value={maskedPhone}
 										onChange={(e) => handlePhoneInput(e.target.value)}
 									/>
