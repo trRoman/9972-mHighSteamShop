@@ -41,7 +41,7 @@ export default function CartPage() {
 	const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
 	const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
 
-	// phone mask helpers (+7-(XXX)-XX-XX-XX)
+	// phone mask helpers (+7-(XXX)-XXX-XX-XX)
 	function maskFromDigits(d: string) {
 		const a = d.slice(0, 3);
 		const b = d.slice(3, 6);
@@ -125,7 +125,7 @@ export default function CartPage() {
 			setToastOpen(true);
 			return;
 		}
-		// validate phone mask +7-(XXX)-XX-XX-XX
+		// validate phone mask +7-(XXX)-XXX-XX-XX
 		if (!/^\+7-\(\d{3}\)-\d{3}-\d{2}-\d{2}$/.test(maskedPhone)) {
 			setToastMsg("Введите телефон в формате +7-(XXX)-XXX-XX-XX");
 			setToastSeverity("warning");
