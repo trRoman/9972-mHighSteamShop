@@ -15,7 +15,7 @@ export default function CategoryBar() {
 	useEffect(() => {
 		let ignore = false;
 		(async () => {
-			const res = await fetch("/api/categories");
+			const res = await fetch("/api/categories", { cache: "no-store" });
 			const data = await res.json();
 			if (!ignore) {
 				const arr = (data.items as Category[]).slice();

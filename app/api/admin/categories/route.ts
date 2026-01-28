@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
 	if (!getCurrentAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	const db = getDb();
 	const rows = db.prepare("SELECT id, slug, name, is_default FROM categories ORDER BY name ASC").all();
-	return NextResponse.json({ items: rows });
+	return NextResponse.json({ items: rows }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: NextRequest) {
