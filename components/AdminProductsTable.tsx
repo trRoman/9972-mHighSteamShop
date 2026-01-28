@@ -65,7 +65,8 @@ export default function AdminProductsTable() {
 
 	useEffect(() => {
 		(async () => {
-			const res = await fetch("/api/categories", { cache: "no-store" });
+			// В админке берём категории из admin API (избегаем возможного кеша публичного /api/categories на проде)
+			const res = await fetch("/api/admin/categories", { cache: "no-store" });
 			if (res.ok) {
 				const data = await res.json();
 				setCategories(data.items);

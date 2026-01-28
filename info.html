@@ -12,7 +12,7 @@ ab.asatryan.015@mail.ru
 v9z-Yeb-hfi-6hg
 https://dnsadmin.hosting.reg.ru/manager/ispmgr
 
-IP-адрес 193.227.240.138
+IP-адрес 193.227.240.138                                          \\\\
 Доступ к серверу
 Логин: root
 Пароль: Wc8Mak8wtZShOxqP
@@ -67,12 +67,65 @@ sudo systemctl edit --full nextjs-mhighsteam.service
 sudo /usr/local/sbin/cleanup_web.sh
 df -h
 
+\\
+
 ls -la
 cp data/shop_backup9-1-2.db data/shop.db
 cp data/shop.db data/shop_backup9-1-2.db
+# остановить приложение/процесс
+sqlite3 data/shop.db ".backup 'data/shop_backup.db'"
+cp data/shop.db data/shop.db-wal data/shop.db-shm /path/to/backup/
+
+1) Остановить приложение.
+2) Бэкап:
+sqlite3 ... .backup ...
+tar -czf public_backup.tgz public
+3) git fetch + git reset --hard
+4) Восстановление:
+восстановить data/shop.db из .backup (или подменить файлом)
+rm -rf public и распаковать tar
+
 rm data/shop.db
+rm -r public
 cp -r public public2
+cp -r public2 public
 cd /root/9972-mhighsteamshop/data/
+cd /root/9972-mhighsteamshop/public/products
+cd /root/9972-mhighsteamshop/backups
+tar -czf public_backup.tgz public
+
+rm -rf public
+cp -a public2 public
+# или (если public уже создан и надо залить внутрь)
+cp -a public2/. public/
+
+Восстановление:
+rm -rf public
+tar -xzf public_backup.tgz
+
+\\
+<!-- Рещзервная копия -->
+set -euo pipefail; TS="$(date +%F_%H-%M-%S)"; BK="backups/$TS"; mkdir -p "$BK"; \
+sudo systemctl stop nextjs-mhighsteam; \
+if command -v sqlite3 >/dev/null 2>&1; then sqlite3 data/shop.db ".backup '$BK/shop.db'"; else cp -a data/shop.db data/shop.db-wal data/shop.db-shm "$BK/" 2>/dev/null || cp -a data/shop.db "$BK/"; fi; \
+tar -czf "$BK/public.tgz" public; \
+git fetch origin --prune && git reset --hard origin/main; \
+cp -a "$BK/shop.db" data/shop.db 2>/dev/null || true; \
+cp -a "$BK/shop.db-wal" "$BK/shop.db-shm" data/ 2>/dev/null || true; \
+rm -rf public && tar -xzf "$BK/public.tgz"; \
+sudo systemctl start nextjs-mhighsteam; \
+echo "OK -> $BK"
+
+<!-- Поднимаем из резервной копии -->
+set -o pipefail; BK="backups/2026-01-28_19-19-17"; \
+sudo systemctl stop nextjs-mhighsteam; \
+[ -f "$BK/shop.db" ] && cp -a "$BK/shop.db" data/shop.db; \
+cp -a "$BK/shop.db-wal" "$BK/shop.db-shm" data/ 2>/dev/null || true; \
+rm -rf public; tar -xzf "$BK/public.tgz"; \
+sudo systemctl start nextjs-mhighsteam; \
+echo "RESTORED <- $BK"
+
+\\
 
 curl -I http://mhigh-steam.ru
 
