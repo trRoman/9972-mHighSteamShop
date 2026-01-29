@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 type Order = {
 	id: number;
 	createdAt: string;
+	createdTo: string;
 	total: number;
 	status: string;
 	name?: string;
@@ -129,7 +130,9 @@ export default function AdminOrdersTable() {
 								<div className="flex items-center justify-between mb-1">
 									<div className="font-semibold">Заказ #{o.id}</div>
 									<div className="text-xs text-gray-600">{o.createdAt}</div>
+									<div className="text-xs text-gray-600">{o.createdTo}</div>
 								</div>
+								
 								<div className="text-sm text-gray-700">Имя: {o.name || "-"}</div>
 								<div className="text-sm text-gray-700">Телефон: {o.phone || "-"}</div>
 								<div className="text-sm text-gray-700">Адрес: {o.address || "-"}</div>
@@ -171,6 +174,7 @@ export default function AdminOrdersTable() {
 								<tr className="text-left border-b">
 									<th className="px-2 py-2">ID</th>
 									<th className="px-2 py-2">Дата</th>
+									<th className="px-2 py-2">Доставить</th>
 									<th className="px-2 py-2">Имя</th>
 									<th className="px-2 py-2">Телефон</th>
 									<th className="px-2 py-2">Адрес</th>
@@ -184,6 +188,7 @@ export default function AdminOrdersTable() {
 										<tr className="border-b">
 											<td className="px-2 py-2 font-medium">#{o.id}</td>
 											<td className="px-2 py-2">{o.createdAt}</td>
+											<td className="px-2 py-2">{o.createdTo}</td>
 											<td className="px-2 py-2">{o.name || "-"}</td>
 											<td className="px-2 py-2">{o.phone || "-"}</td>
 											<td className="px-2 py-2">{o.address || "-"}</td>

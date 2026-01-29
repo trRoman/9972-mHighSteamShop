@@ -19,6 +19,7 @@ export default function CartPage() {
 	const [custName, setCustName] = useState<string>("");
 	const [phoneDigits, setPhoneDigits] = useState<string>("");
 	const [custAddress, setCustAddress] = useState<string>("залив Красная Горка, городской округ Мытищи, Московская область");
+	const [deliveryTime, setDeliveryTime] = useState<string>("");
 	const [toastOpen, setToastOpen] = useState(false);
 	const [toastMsg, setToastMsg] = useState<string>("");
 	const [toastSeverity, setToastSeverity] = useState<"success" | "error" | "info" | "warning">("info");
@@ -28,6 +29,7 @@ export default function CartPage() {
 	type PlacedOrder = {
 		id: number;
 		createdAt: string;
+		createdTo: string;
 		status?: string;
 		name: string;
 		phone: string;
@@ -79,6 +81,7 @@ export default function CartPage() {
 			const mapped: PlacedOrder[] = (data.items || []).map((o: any) => ({
 				id: o.id,
 				createdAt: o.createdAt ?? o.created_at,
+				createdTo: o.created_to ?? "",
 				status: o.status,
 				name: o.customer_name ?? "",
 				phone: o.customer_phone ?? "",
@@ -146,6 +149,7 @@ export default function CartPage() {
 				name: custName.trim(),
 				phone: maskedPhone.trim(),
 				address: custAddress,
+				deliveryTime: deliveryTime,
 				items: items.map(it => ({ id: it.id, quantity: it.quantity }))
 			})
 		}).then(async (res) => {
@@ -199,6 +203,7 @@ export default function CartPage() {
 									<div className="text-sm text-gray-700">Статус: {orders[orderTab].status}</div>
 								)}
 								<div className="text-sm text-gray-700">Дата: {orders[orderTab].createdAt}</div>
+								<div className="text-sm text-gray-700">Желаемое время: {orders[orderTab].createdTo}</div>
 								<div className="text-sm text-gray-700">Имя: {orders[orderTab].name}</div>
 								<div className="text-sm text-gray-700">Телефон: {orders[orderTab].phone}</div>
 								<div className="text-sm text-gray-700">Адрес: {orders[orderTab].address}</div>
@@ -257,6 +262,15 @@ export default function CartPage() {
 										placeholder="+7-(XXX)-XXX-XX-XX"
 										value={maskedPhone}
 										onChange={(e) => handlePhoneInput(e.target.value)}
+									/>
+								</div>
+								<div>
+									<label className="block text-sm text-gray-600 mb-1">Желаемое время</label>
+									<input
+										type="datetime-local"
+										className="w-full border rounded px-3 py-2"
+										value={deliveryTime}
+										onChange={(e) => setDeliveryTime(e.target.value)}
 									/>
 								</div>
 								<div>
@@ -338,6 +352,15 @@ export default function CartPage() {
 										placeholder="+7-(XXX)-XXX-XX-XX"
 										value={maskedPhone}
 										onChange={(e) => handlePhoneInput(e.target.value)}
+									/>
+								</div>
+								<div>
+									<label className="block text-sm text-gray-600 mb-1">Желаемое время</label>
+									<input
+										type="datetime-local"
+										className="w-full border rounded px-3 py-2"
+										value={deliveryTime}
+										onChange={(e) => setDeliveryTime(e.target.value)}
 									/>
 								</div>
 								<div>

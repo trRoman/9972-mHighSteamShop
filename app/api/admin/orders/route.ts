@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 	const db = getDb();
 	const rows = db.prepare(`
 		SELECT
-			o.id, o.created_at AS createdAt, o.total_price AS total,
+			o.id, o.created_at AS createdAt, o.created_to AS createdTo, o.total_price AS total,
 			o.status, o.customer_name AS name, o.customer_phone AS phone, o.customer_address AS address
 		FROM orders o
 		ORDER BY o.created_at DESC, o.id DESC

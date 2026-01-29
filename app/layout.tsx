@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 	title: "Заказ доставки еды в баню",
 	description: "Интернет-магазин доставки еды в баню",
 };
-
+// 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="ru">

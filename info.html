@@ -104,7 +104,7 @@ rm -rf public
 tar -xzf public_backup.tgz
 
 \\
-<!-- Рещзервная копия -->
+<!-- Резервная копия -->
 set -euo pipefail; TS="$(date +%F_%H-%M-%S)"; BK="backups/$TS"; mkdir -p "$BK"; \
 sudo systemctl stop nextjs-mhighsteam; \
 if command -v sqlite3 >/dev/null 2>&1; then sqlite3 data/shop.db ".backup '$BK/shop.db'"; else cp -a data/shop.db data/shop.db-wal data/shop.db-shm "$BK/" 2>/dev/null || cp -a data/shop.db "$BK/"; fi; \

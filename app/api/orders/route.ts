@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
 		name?: string;
 		phone?: string;
 		address?: string;
+		deliveryTime?: string;
 		items?: Array<{ id: number; quantity: number }>;
 	} | null;
 	if (!body || !body.name || !body.phone || !Array.isArray(body.items) || body.items.length === 0) {
@@ -35,8 +36,8 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json({ error: "Empty items" }, { status: 400 });
 	}
 	const tx = db.transaction(() => {
-		const info = db.prepare("INSERT INTO orders (total_price, client_token, expires_at, status, customer_name, customer_phone, customer_address) VALUES (?, ?, ?, ?, ?, ?, ?)")
-			.run(total, token, expires.toISOString(), "ожидает", body.name!, body.phone!, body.address ?? null);
+		const info = db.prepare("INSERT INTO orders (total_price, client_token, expires_at, status, customer_name, customer_phone, customer_address, created_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+			.run(total, token, expires.toISOString(), "ожидает", body.name!, body.phone!, body.address ?? null, body.deliveryTime ?? null);
 		const orderId = Number(info.lastInsertRowid);
 		const ins = db.prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
 		for (const oi of orderItems) {
