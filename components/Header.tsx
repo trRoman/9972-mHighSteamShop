@@ -55,6 +55,9 @@ export default function Header() {
 			<div className="flex-1 text-center font-semibold">
 				<Link href="/" className="uppercase text-[#022359] font-bold">Заказ доставки еды в баню</Link>
 			</div>
+			<Link href="/contacts" className="hidden md:block px-4 py-2 text-[#022359] font-medium hover:underline">
+				Контакты
+			</Link>
 			<Link href="/cart" className="relative w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
 					<path d="M2.25 2.25a.75.75 0 0 0 0 1.5h1.386c.17 0 .318.114.36.279l2.31 9.243a2.25 2.25 0 0 0 2.187 1.698h8.022a2.25 2.25 0 0 0 2.187-1.698l1.35-5.4a.75.75 0 0 0-.728-.927H6.888l-.48-1.92A2.25 2.25 0 0 0 3.636 2.25H2.25Z" />
@@ -81,6 +84,9 @@ export default function Header() {
 							</Link>
 							<Link href="/cart" className="block px-2 py-2 rounded hover:bg-gray-100" onClick={() => setOpen(false)}>
 								Корзина
+							</Link>
+							<Link href="/contacts" className="block px-2 py-2 rounded hover:bg-gray-100" onClick={() => setOpen(false)}>
+								Контакты
 							</Link>
 							{isAdmin && (
 								<Link href="/admin/orders" className="block px-2 py-2 rounded hover:bg-gray-100" onClick={() => setOpen(false)}>
