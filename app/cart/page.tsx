@@ -20,6 +20,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 export default function CartPage() {
 	const { items, removeItem, updateQuantity, totalPrice } = useCart();
+	// Ref so async callbacks (widget events, intervals, visibilitychange) always see current items
+	const itemsRef = useRef(items);
+	const removeItemRef = useRef(removeItem);
+	useEffect(() => { itemsRef.current = items; }, [items]);
+	useEffect(() => { removeItemRef.current = removeItem; }, [removeItem]);
+
 	const [custName, setCustName] = useState<string>("");
 	const [phoneDigits, setPhoneDigits] = useState<string>("");
 	const [custAddress, setCustAddress] = useState<string>("залив Красная Горка, городской округ Мытищи, Московская область");
@@ -111,7 +117,7 @@ export default function CartPage() {
 			if (pendingId) {
 				const paid = mapped.find(o => String(o.id) === pendingId && o.status === "оплачен");
 				if (paid) {
-					items.forEach(it => removeItem(it.id));
+					itemsRef.current.forEach(it => removeItemRef.current(it.id));
 					localStorage.removeItem("yk_pending_order");
 				}
 			}
@@ -214,7 +220,7 @@ export default function CartPage() {
 		localStorage.removeItem("yk_pending_order");
 		const paidOrderId = paymentModal.orderId;
 		closePaymentModal();
-		items.forEach(it => removeItem(it.id));
+		itemsRef.current.forEach(it => removeItemRef.current(it.id));
 		showToast("Оплата прошла успешно! Заказ подтверждён.", "success");
 		// Webhook from YooKassa may arrive a few seconds after the widget fires "success".
 		// Poll until the paid order appears (status "оплачен"), max 30 seconds.
