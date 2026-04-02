@@ -1,6 +1,9 @@
+// ./app/cart/page.tsx
+// Корзина и оформление заказа
+
 "use client";
 export const dynamic = "force-dynamic";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
@@ -13,6 +16,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function CartPage() {
 	const { items, removeItem, updateQuantity, totalPrice } = useCart();
@@ -25,6 +29,15 @@ export default function CartPage() {
 	const [toastSeverity, setToastSeverity] = useState<"success" | "error" | "info" | "warning">("info");
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [pendingRemoveId, setPendingRemoveId] = useState<number | null>(null);
+
+	// Payment modal
+	const [paymentModal, setPaymentModal] = useState<{
+		open: boolean;
+		confirmationToken: string | null;
+		orderId: number | null;
+	}>({ open: false, confirmationToken: null, orderId: null });
+	const [widgetLoading, setWidgetLoading] = useState(false);
+	const checkoutRef = useRef<any>(null);
 
 	type PlacedOrder = {
 		id: number;
@@ -63,8 +76,6 @@ export default function CartPage() {
 	function handlePhoneInput(raw: string) {
 		const digitsOnly = raw.replace(/\D/g, "").replace(/^7/, "").slice(0, 10);
 		let newDigits = digitsOnly;
-		// If user deleted a formatting char (value length reduced but digits length didn't),
-		// remove one digit from the end to move back the mask.
 		if (digitsOnly.length === phoneDigits.length && raw.length < _prevMasked.length) {
 			newDigits = phoneDigits.slice(0, -1);
 		}
@@ -93,15 +104,23 @@ export default function CartPage() {
 			}));
 			setOrders(mapped);
 			if (mapped.length > 0) setOrderTab(mapped.length - 1);
+
+			// Edge case: user closed browser during payment and returned.
+			// If the pending order is now "оплачен" — clear the cart.
+			const pendingId = localStorage.getItem("yk_pending_order");
+			if (pendingId) {
+				const paid = mapped.find(o => String(o.id) === pendingId && o.status === "оплачен");
+				if (paid) {
+					items.forEach(it => removeItem(it.id));
+					localStorage.removeItem("yk_pending_order");
+				}
+			}
 		} catch {}
 	}
 
-	// initial load
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => { loadOrders(); }, []);
 
-	// poll for order status updates without page reload
-	// refresh periodically when there are orders
 	useEffect(() => {
 		const onVisible = () => {
 			if (document.visibilityState === "visible") loadOrders();
@@ -121,27 +140,135 @@ export default function CartPage() {
 		};
 	}, [orders.length]);
 
+	// Initialize YooKassa widget when payment modal opens
+	useEffect(() => {
+		if (!paymentModal.open || !paymentModal.confirmationToken) return;
+
+		setWidgetLoading(true);
+
+		const initWidget = () => {
+			// Small delay to ensure Dialog DOM is fully mounted
+			setTimeout(() => {
+				try {
+					const checkout = new (window as any).YooMoneyCheckoutWidget({
+						confirmation_token: paymentModal.confirmationToken,
+						return_url: window.location.origin + "/cart",
+						error_callback: (err: any) => {
+							console.error("YooKassa widget error:", err);
+						},
+					});
+					checkoutRef.current = checkout;
+					checkout.render("yookassa-widget-container");
+					setWidgetLoading(false);
+					checkout.on("success", handlePaymentSuccess);
+					checkout.on("fail", handlePaymentFail);
+				} catch (err) {
+					console.error("YooKassa widget init error:", err);
+					setWidgetLoading(false);
+				}
+			}, 150);
+		};
+
+		if ((window as any).YooMoneyCheckoutWidget) {
+			initWidget();
+		} else {
+			// Load script from CDN if not already loaded
+			const existing = document.querySelector("script[data-yookassa-widget]");
+			if (existing) {
+				// Script tag exists but widget not ready — wait for load
+				existing.addEventListener("load", initWidget, { once: true });
+			} else {
+				const script = document.createElement("script");
+				script.setAttribute("data-yookassa-widget", "1");
+				script.src = "https://yookassa.ru/checkout-widget/v1/checkout-widget.js";
+				script.onload = initWidget;
+				script.onerror = () => {
+					setWidgetLoading(false);
+					showToast("Не удалось загрузить форму оплаты", "error");
+					closePaymentModal();
+				};
+				document.head.appendChild(script);
+			}
+		}
+
+		return () => {
+			if (checkoutRef.current) {
+				try { checkoutRef.current.destroy(); } catch {}
+				checkoutRef.current = null;
+			}
+		};
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [paymentModal.open, paymentModal.confirmationToken]);
+
+	function showToast(msg: string, severity: "success" | "error" | "info" | "warning") {
+		setToastMsg(msg);
+		setToastSeverity(severity);
+		setToastOpen(true);
+	}
+
+	function closePaymentModal() {
+		setPaymentModal({ open: false, confirmationToken: null, orderId: null });
+	}
+
+	function handlePaymentSuccess() {
+		localStorage.removeItem("yk_pending_order");
+		const paidOrderId = paymentModal.orderId;
+		closePaymentModal();
+		items.forEach(it => removeItem(it.id));
+		showToast("Оплата прошла успешно! Заказ подтверждён.", "success");
+		// Webhook from YooKassa may arrive a few seconds after the widget fires "success".
+		// Poll until the paid order appears (status "оплачен"), max 30 seconds.
+		let attempts = 0;
+		const poll = setInterval(async () => {
+			attempts++;
+			try {
+				const res = await fetch("/api/orders/my", { cache: "no-store" });
+				if (!res.ok) return;
+				const data = await res.json();
+				const mapped: PlacedOrder[] = (data.items || []).map((o: any) => ({
+					id: o.id,
+					createdAt: o.createdAt ?? o.created_at,
+					createdTo: o.created_to ?? "",
+					status: o.status,
+					name: o.customer_name ?? "",
+					phone: o.customer_phone ?? "",
+					address: o.customer_address ?? "",
+					items: (o.items || []).map((it: any) => ({
+						id: it.id, name: it.name, price: it.price, quantity: it.quantity, image: it.image
+					})),
+					total: o.total
+				}));
+				setOrders(mapped);
+				setOrderTab(mapped.length > 0 ? mapped.length - 1 : 0);
+				const found = mapped.find(o => o.id === paidOrderId && o.status === "оплачен");
+				if (found || attempts >= 15) clearInterval(poll);
+			} catch {
+				if (attempts >= 15) clearInterval(poll);
+			}
+		}, 2000);
+	}
+
+	function handlePaymentFail() {
+		localStorage.removeItem("yk_pending_order");
+		closePaymentModal();
+		showToast("Оплата не завершена. Заказ будет отменён.", "warning");
+		loadOrders();
+	}
+
 	function handleCheckout() {
 		if (!custName.trim() || !maskedPhone.trim()) {
-			setToastMsg("Пожалуйста, заполните имя и телефон.");
-			setToastSeverity("warning");
-			setToastOpen(true);
+			showToast("Пожалуйста, заполните имя и телефон.", "warning");
 			return;
 		}
-		// validate phone mask +7-(XXX)-XXX-XX-XX
 		if (!/^\+7-\(\d{3}\)-\d{3}-\d{2}-\d{2}$/.test(maskedPhone)) {
-			setToastMsg("Введите телефон в формате +7-(XXX)-XXX-XX-XX");
-			setToastSeverity("warning");
-			setToastOpen(true);
+			showToast("Введите телефон в формате +7-(XXX)-XXX-XX-XX", "warning");
 			return;
 		}
 		if (items.length === 0) {
-			setToastMsg("Корзина пуста.");
-			setToastSeverity("info");
-			setToastOpen(true);
+			showToast("Корзина пуста.", "info");
 			return;
 		}
-		// Send to backend
+
 		fetch("/api/orders", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -153,25 +280,24 @@ export default function CartPage() {
 				items: items.map(it => ({ id: it.id, quantity: it.quantity }))
 			})
 		}).then(async (res) => {
-			if (!res.ok) throw new Error("Не удалось оформить заказ");
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({} as any));
+				throw new Error(data?.error || "Не удалось оформить заказ");
+			}
 			const data = await res.json().catch(() => ({} as any));
-			const newOrderId = data?.id;
-			// clear cart
-			items.forEach(it => removeItem(it.id));
-			// reload orders
-			await loadOrders();
-			setToastMsg(newOrderId ? `Заказ оформлен. ID заказа: ${newOrderId}` : "Заказ оформлен. Мы свяжемся с вами по телефону.");
-			setToastSeverity("success");
-			setToastOpen(true);
-		}).catch(() => {
-			setToastMsg("Ошибка оформления заказа");
-			setToastSeverity("error");
-			setToastOpen(true);
+			if (data?.confirmationToken) {
+				if (data.id) localStorage.setItem("yk_pending_order", String(data.id));
+				setPaymentModal({
+					open: true,
+					confirmationToken: data.confirmationToken,
+					orderId: data.id ?? null,
+				});
+			} else {
+				showToast("Ошибка: не получен токен оплаты", "error");
+			}
+		}).catch((err: Error) => {
+			showToast(err.message || "Ошибка оформления заказа", "error");
 		});
-
-		setToastMsg("Заказ оформлен. Мы свяжемся с вами по телефону.");
-		setToastSeverity("success");
-		setToastOpen(true);
 	}
 
 	return (
@@ -198,9 +324,18 @@ export default function CartPage() {
 						{orders[orderTab] && (
 							<div className="space-y-2">
 								<div className="text-sm text-gray-700">ID заказа: {orders[orderTab].id}</div>
-								
 								{orders[orderTab].status && (
-									<div className="text-sm text-gray-700">Статус: {orders[orderTab].status}</div>
+									<div className="text-sm text-gray-700">
+										Статус:{" "}
+										<span className={
+											orders[orderTab].status === "оплачен" ? "text-green-600 font-medium" :
+											orders[orderTab].status === "ожидает_оплаты" ? "text-yellow-600 font-medium" :
+											orders[orderTab].status === "отменён" ? "text-red-600 font-medium" :
+											"text-gray-700"
+										}>
+											{orders[orderTab].status === "ожидает_оплаты" ? "ожидает оплаты" : orders[orderTab].status}
+										</span>
+									</div>
 								)}
 								<div className="text-sm text-gray-700">Дата: {orders[orderTab].createdAt}</div>
 								<div className="text-sm text-gray-700">Желаемое время: {orders[orderTab].createdTo}</div>
@@ -378,7 +513,7 @@ export default function CartPage() {
 								<span className="font-semibold">{totalPrice.toLocaleString()} ₽</span>
 							</div>
 							<button className="w-full mt-2 bg-black text-white py-2 rounded hover:bg-gray-900" onClick={handleCheckout}>
-								Оформить заказ
+								Оформить и оплатить
 							</button>
 						</div>
 					</div>
@@ -394,11 +529,35 @@ export default function CartPage() {
 							<div className="text-xl font-semibold">{totalPrice.toLocaleString()} ₽</div>
 						</div>
 						<button className="bg-black text-white px-4 py-2 rounded hover:bg-gray-900" onClick={handleCheckout}>
-							Оформить
+							Оплатить
 						</button>
 					</div>
 				</div>
 			)}
+
+			{/* Payment modal */}
+			<Dialog
+				open={paymentModal.open}
+				onClose={handlePaymentFail}
+				maxWidth="sm"
+				fullWidth
+				PaperProps={{ sx: { borderRadius: 2 } }}
+			>
+				<DialogTitle sx={{ pb: 1 }}>
+					Оплата заказа {paymentModal.orderId ? `#${paymentModal.orderId}` : ""}
+				</DialogTitle>
+				<DialogContent sx={{ pb: 2, minHeight: 300 }}>
+					{widgetLoading && (
+						<div className="flex items-center justify-center h-48">
+							<CircularProgress />
+						</div>
+					)}
+					<div
+						id="yookassa-widget-container"
+						style={{ display: widgetLoading ? "none" : "block" }}
+					/>
+				</DialogContent>
+			</Dialog>
 
 			{/* Snackbar */}
 			<Snackbar
@@ -412,7 +571,7 @@ export default function CartPage() {
 				</MuiAlert>
 			</Snackbar>
 
-			{/* Confirm delete dialog */}
+			{/* Confirm delete item dialog */}
 			<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
 				<DialogTitle>Удалить товар</DialogTitle>
 				<DialogContent>
@@ -425,9 +584,7 @@ export default function CartPage() {
 						onClick={() => {
 							if (pendingRemoveId != null) {
 								removeItem(pendingRemoveId);
-								setToastMsg("Товар удалён из корзины");
-								setToastSeverity("success");
-								setToastOpen(true);
+								showToast("Товар удалён из корзины", "success");
 							}
 							setConfirmOpen(false);
 							setPendingRemoveId(null);
@@ -454,14 +611,10 @@ export default function CartPage() {
 									const res = await fetch(`/api/orders/${pendingOrderId}`, { method: "DELETE" });
 									if (!res.ok) throw new Error();
 									await loadOrders();
-									setToastMsg("Заказ удалён");
-									setToastSeverity("success");
-									setToastOpen(true);
+									showToast("Заказ удалён", "success");
 								}
 							} catch {
-								setToastMsg("Не удалось удалить заказ");
-								setToastSeverity("error");
-								setToastOpen(true);
+								showToast("Не удалось удалить заказ", "error");
 							} finally {
 								setConfirmOrderOpen(false);
 								setPendingOrderId(null);
@@ -476,4 +629,3 @@ export default function CartPage() {
 		</Suspense>
 	);
 }
-

@@ -7,10 +7,22 @@ export async function GET(req: NextRequest) {
 	const token = req.cookies.get(ORDER_COOKIE)?.value;
 	if (!token) return NextResponse.json({ items: [] });
 	const db = getDb();
+
+	// Fallback cleanup: delete orders stuck in "ожидает_оплаты" for more than 2 hours
+	// Primary cleanup is via YooKassa webhook (payment.canceled), this handles missed webhooks
+	db.prepare(`
+		DELETE FROM orders
+		WHERE client_token = ?
+		  AND status = 'ожидает_оплаты'
+		  AND created_at < datetime('now', '-2 hours')
+	`).run(token);
+
 	const orders = db.prepare(`
 		SELECT id, created_at, created_to, total_price, status, customer_name, customer_phone, customer_address
 		FROM orders
-		WHERE client_token = ? AND (expires_at IS NULL OR expires_at > datetime('now'))
+		WHERE client_token = ?
+		  AND status != 'ожидает_оплаты'
+		  AND (expires_at IS NULL OR expires_at > datetime('now'))
 		ORDER BY id ASC
 	`).all(token) as Array<{ id: number; created_at: string; created_to: string; total_price: number; status: string; customer_name?: string; customer_phone?: string; customer_address?: string }>;
 	const getItems = db.prepare(`

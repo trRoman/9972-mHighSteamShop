@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
 			o.id, o.created_at AS createdAt, o.created_to AS createdTo, o.total_price AS total,
 			o.status, o.customer_name AS name, o.customer_phone AS phone, o.customer_address AS address
 		FROM orders o
+		WHERE o.status != 'ожидает_оплаты'
 		ORDER BY o.created_at DESC, o.id DESC
 	`).all();
 

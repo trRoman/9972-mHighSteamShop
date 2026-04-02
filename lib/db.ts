@@ -89,6 +89,7 @@ function initSchema(db: Database.Database) {
 	migrateOrdersStatusCustomer(db);
 	migrateOrderItemsChecked(db);
 	migrateOrdersCreatedTo(db);
+	migrateOrdersPaymentId(db);
 }
 
 function ensureMigrationsTable(db: Database.Database) {
@@ -253,6 +254,15 @@ function migrateOrderItemsChecked(db: Database.Database) {
 	const hasChecked = columns.some(c => c.name === "checked");
 	if (!hasChecked) db.exec(`ALTER TABLE order_items ADD COLUMN checked INTEGER NOT NULL DEFAULT 0`);
 	markMigration(db, "migrate_order_items_checked");
+}
+
+function migrateOrdersPaymentId(db: Database.Database) {
+	if (hasMigration(db, "migrate_orders_payment_id")) return;
+	const columns = db.prepare(`PRAGMA table_info('orders')`).all() as Array<{ name: string }>;
+	if (!columns.some(c => c.name === "payment_id")) {
+		db.exec(`ALTER TABLE orders ADD COLUMN payment_id TEXT`);
+	}
+	markMigration(db, "migrate_orders_payment_id");
 }
 
 function migrateOrdersCreatedTo(db: Database.Database) {
