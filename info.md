@@ -12,7 +12,7 @@ YOOKASSA_SECRET_KEY=
 и указал YOOKASSA_TAX_SYSTEM_CODE=6
 YOOKASSA_VAT_CODE=1
 
-В настройках самой юкассы я указал URL для уведомлений https://mhigh-steam.ru/yookassa/webhook для вебхуков.
+В настройках самой юкассы я указал URL для уведомлений https://mhigh-steam.ru/api/yookassa/webhook для вебхуков.
 
 \\
 

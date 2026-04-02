@@ -10,15 +10,21 @@ function ok() {
 }
 
 export async function POST(req: NextRequest) {
-	let body: { object?: { id?: string } } | null = null;
+	let body: { event?: string; object?: { id?: string; status?: string } } | null = null;
 	try {
 		body = await req.json();
 	} catch {
+		console.error("[YooKassa webhook] Failed to parse body");
 		return ok();
 	}
 
+	console.log("[YooKassa webhook] Received:", body?.event, "payment:", body?.object?.id, "status:", body?.object?.status);
+
 	const paymentId = body?.object?.id;
-	if (!paymentId || typeof paymentId !== "string") return ok();
+	if (!paymentId || typeof paymentId !== "string") {
+		console.error("[YooKassa webhook] No payment id in body");
+		return ok();
+	}
 
 	// Re-verify by fetching the payment from YooKassa API
 	// Never trust the webhook body alone
@@ -43,15 +49,21 @@ export async function POST(req: NextRequest) {
 	if (!payment) return ok();
 
 	const orderId = Number(payment.metadata?.order_id);
-	if (!orderId) return ok();
+	console.log("[YooKassa webhook] Verified payment status:", payment.status, "order_id:", orderId);
+
+	if (!orderId) {
+		console.error("[YooKassa webhook] No order_id in payment metadata");
+		return ok();
+	}
 
 	const db = getDb();
 
 	if (payment.status === "succeeded") {
 		db.prepare("UPDATE orders SET status = 'оплачен' WHERE id = ?").run(orderId);
+		console.log("[YooKassa webhook] Order", orderId, "marked as оплачен");
 	} else if (payment.status === "canceled") {
-		// Payment expired or user cancelled — delete the order
 		db.prepare("DELETE FROM orders WHERE id = ?").run(orderId);
+		console.log("[YooKassa webhook] Order", orderId, "deleted (payment canceled)");
 	}
 
 	return ok();
